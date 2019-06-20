@@ -9,8 +9,9 @@ namespace tb {
     Inverter() : Decorator() {}
     ~Inverter() {}
 
-    status update(void* const& data = nullptr) override {
-      s = child->update(data);
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
+      status s = child->update(data, runningPtr);
+      if (s == status::running) return s;
 
       s = s == status::success ? status::failure : (s == status::failure ? status::success : s);
 

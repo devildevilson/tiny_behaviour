@@ -9,8 +9,8 @@ namespace tb {
     UntilSuccess() : Decorator() {}
     ~UntilSuccess() {}
 
-    status update(void* const& data = nullptr) override {
-      s = child->update(data);
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
+      status s = child->update(data, runningPtr);
       
       s = s != status::success ? status::running : s;
       

@@ -9,9 +9,9 @@ namespace tb {
     Succeeder() : Decorator() {}
     ~Succeeder() {}
 
-    status update(void* const& data = nullptr) override {
-      child->update(data);
-      s = status::success;
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
+      child->update(data, runningPtr);
+      status s = status::success;
       return s;
     }
   };

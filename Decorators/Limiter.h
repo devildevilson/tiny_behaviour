@@ -9,8 +9,8 @@ namespace tb {
     Limiter(const uint32_t &limit = 0) : Decorator(), limit(limit), counter(0) {}
     ~Limiter() {}
 
-    status update(void* const& data = nullptr) override {
-      s = child->update(data);
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
+      status s = child->update(data, runningPtr);
       ++counter;
       if (limit > 0 && counter < limit) return s;
       

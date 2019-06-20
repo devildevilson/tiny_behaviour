@@ -9,15 +9,15 @@ namespace tb {
     Sequence() : Compositor() {}
     ~Sequence() {}
 
-    status update(void* const& data = nullptr) override {
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
+      status s;
       if (!hasChildren()) {
-        index = 0;
         s = status::success;
         return s;
       }
 
-      for (index = 0; index < children.size(); index++) {
-        s = children[index]->update(data);
+      for (size_t index = 0; index < children.size(); index++) {
+        s = children[index]->update(data, runningPtr);
 
         if (s != status::success) return s;
       }

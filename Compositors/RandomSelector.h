@@ -19,7 +19,7 @@ namespace tb {
 
     ~RandomSelector() {}
 
-    status update(void* const& data = nullptr) override {
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
       if (!hasChildren()) return status::success;
       
       uint32_t maxIndex = children.size()-1;
@@ -32,7 +32,7 @@ namespace tb {
       }
       
       if (itr->second == UINT64_MAX) itr->second = d(engine);
-      s = children[itr->second]->update(data);
+      status s = children[itr->second]->update(data, runningPtr);
       
       if (s != status::running) itr->second = UINT64_MAX;
 

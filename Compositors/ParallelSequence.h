@@ -9,7 +9,7 @@ namespace tb {
     ParallelSequence(const uint32_t &minSuccess = 0, const uint32_t &minFail = 0) : Compositor(), minSuccess(minSuccess), minFail(minFail) {}
     ~ParallelSequence() {}
 
-    status update(void* const& data = nullptr) override {
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
       uint32_t minimumSuccess = minSuccess;
       uint32_t minimumFail = minFail;
 
@@ -20,11 +20,12 @@ namespace tb {
       uint32_t totalFail = 0;
 
       for (auto &child : children) {
-        const auto &status = child->update(data);
+        const auto &status = child->update(data, runningPtr);
         if (status == status::success) totalSuccess++;
         if (status == status::failure) totalFail++;
       }
 
+      status s;
       if (totalSuccess >= minimumSuccess) s = status::success;
       else if (totalFail >= minimumFail) s = status::failure;
       else s = status::running;

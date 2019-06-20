@@ -13,10 +13,10 @@ namespace tb {
 
     void setAction(const std::function<status(Node* const& currentNode, void* const& data)> &a) { action = std::move(a);}
 
-    status update(void* const& data = nullptr) override {
-      s = status::failure;
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
+      status s = status::failure;
       if (action) s = action(this, data);
-      if (s == status::running) setRunning(this);
+      if (s == status::running && runningPtr != nullptr) *runningPtr = this;
       return s;
     }
     

@@ -24,29 +24,29 @@ namespace tb {
     friend class BehaviorTreeBuilder;
   public:
     enum class status {
-      init,
       success,
-      failure,
       running,
+      failure,
+      init,
     };
 
-    Node(const uint32_t &type) : type(type) {}
+    Node(const uint32_t &type) : cIndex(0), tree(nullptr), parent(nullptr), type(type) {}
     virtual ~Node() {}
 
     virtual std::string toString() const = 0;
     virtual void print(const std::string &indent) const = 0;
     
-    virtual status update(void* const& data = nullptr) = 0;
+    virtual status update(void* const& data = nullptr, Node** runningPtr = nullptr) = 0;
     
     // overrided only in BehaviorTree
-    virtual void setRunning(Node* node) {
-      tree->setRunning(node);
-    }
+//     virtual void setRunning(Node* node) {
+//       tree->setRunning(node);
+//     }
 
-    bool isSuccess() const { return s == status::success; }
-    bool isFailure() const { return s == status::failure; }
-    bool isRunning() const { return s == status::running; }
-    void reset() { s = status::init; }
+//     bool isSuccess() const { return s == status::success; }
+//     bool isFailure() const { return s == status::failure; }
+//     bool isRunning() const { return s == status::running; }
+//     void reset() { s = status::init; }
     
     Node* getParent() const { return parent; }
     Node* getRoot() const { return tree; }
@@ -55,11 +55,11 @@ namespace tb {
     template<typename NodeClass> bool is() const { return getNodeType() == NodeClass::getType(); }
     uint32_t getNodeType() const { return type; }
   protected:
-    uint32_t cIndex = 0;
-    Node* tree = nullptr;
-    Node* parent = nullptr;
-    status s = status::init;
-    uint32_t type = UINT32_MAX;
+    uint32_t cIndex;
+    Node* tree;
+    Node* parent;
+//     status s = status::init;
+    uint32_t type;
   };
 }
 

@@ -9,11 +9,14 @@ namespace tb {
     Equality() : Binary() {}
     ~Equality() {}
 
-    status update(void* const& data = nullptr) override {
-      auto firstStatus = hasFirstChild() ? nodes.first->update(data) : status::failure;
-      auto secondStatus = hasSecondChild() ? nodes.second->update(data) : status::failure;
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
+      auto firstStatus = hasFirstChild() ? nodes.first->update(data, runningPtr) : status::failure;
+      if (firstStatus == status::running) return status::running;
+      
+      auto secondStatus = hasSecondChild() ? nodes.second->update(data, runningPtr) : status::failure;
+      if (secondStatus == status::running) return status::running;
 
-      s = firstStatus == secondStatus ? status::success : status::failure;
+      status s = firstStatus == secondStatus ? status::success : status::failure;
       
       return s;
     }

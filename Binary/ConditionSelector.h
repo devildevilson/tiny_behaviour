@@ -12,11 +12,12 @@ namespace tb {
 
     void setPredicate(const std::function<PREDICATE_SIGNATURE> &p) { predicate = p;}
 
-    status update(void* const& data = nullptr) override {
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
       if (!predicate) return status::failure;
-
-      if (predicate(this, data)) s = hasFirstChild() ? nodes.first->update(data) : status::failure;
-      else s = hasSecondChild() ? nodes.second->update(data) : status::failure;
+      
+      status s;
+      if (predicate(this, data)) s = hasFirstChild() ? nodes.first->update(data, runningPtr) : status::failure;
+      else s = hasSecondChild() ? nodes.second->update(data, runningPtr) : status::failure;
 
       return s;
     }

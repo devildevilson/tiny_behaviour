@@ -31,7 +31,7 @@
 #include "Binary/ConditionSelector.h"
 
 #ifndef TINY_BEHAVIOR_DEFAULT_NODE_CONTAINER_SIZE
-  #define TINY_BEHAVIOR_DEFAULT_NODE_CONTAINER_SIZE 50*sizeof(TinyBehavior::ParallelSequence)
+  #define TINY_BEHAVIOR_DEFAULT_NODE_CONTAINER_SIZE 50*sizeof(tb::ParallelSequence)
 #endif
 
 namespace tb {
@@ -116,8 +116,8 @@ namespace tb {
   class BehaviorTree : public Node {
     friend class BehaviorTreeBuilder;
   public:
-    BehaviorTree(const size_t &containerSize) : Node(TINY_BEHAVIOR_TREE_NODE_TYPE), container(containerSize) {}
-    BehaviorTree(NodeContainer &&container) : Node(TINY_BEHAVIOR_TREE_NODE_TYPE), container(std::move(container)) {}
+    BehaviorTree(const size_t &containerSize) : Node(TINY_BEHAVIOR_TREE_NODE_TYPE), root(nullptr), container(containerSize) {}
+    BehaviorTree(NodeContainer &&container) : Node(TINY_BEHAVIOR_TREE_NODE_TYPE), root(nullptr), container(std::move(container)) {}
     ~BehaviorTree() {
       for (auto &node : nodes) {
         //delete node;
@@ -125,13 +125,13 @@ namespace tb {
       }
     }
 
-    status update(void* const& data = nullptr) override {
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
       if (root == nullptr) {
         std::cout << "This tree is invalid and must be deleted!" << "\n";
         exit(-1);
       }
 
-      return root->update(data);
+      return root->update(data, runningPtr);
     }
 
     std::string toString() const override { return "BehaviorTree"; }
@@ -141,11 +141,11 @@ namespace tb {
     
     constexpr static uint32_t getType() { return TINY_BEHAVIOR_TREE_NODE_TYPE; }
     
-    Node* getRunning() { return currentAction; }
-    void setRunning(Node* node) override { currentAction = node; }
+//     Node* getRunning() { return currentAction; }
+//     void setRunning(Node* node) override { currentAction = node; }
   private:
-    Node* root = nullptr;
-    Node* currentAction = nullptr;
+    Node* root;
+//     Node* currentAction = nullptr;
     std::vector<Node*> nodes;
     NodeContainer container;
   };
@@ -243,8 +243,7 @@ namespace tb {
     BehaviorTreeBuilder & random(const uint32_t &seed = 0, RandomSelector** out = nullptr) {
       error();
 
-//         RandomSelector* node = new RandomSelector(seed);
-      RandomSelector* node = currentContainer.create<RandomSelector>();
+      RandomSelector* node = currentContainer.create<RandomSelector>(seed);
       if (out != nullptr) *out = node;
 
       checkCurrentNode(node);

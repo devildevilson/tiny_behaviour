@@ -9,9 +9,9 @@ namespace tb {
     Failer() : Decorator() {}
     ~Failer() {}
 
-    status update(void* const& data = nullptr) override {
-      child->update(data);
-      s = status::failure;
+    status update(void* const& data = nullptr, Node** runningPtr = nullptr) override {
+      child->update(data, runningPtr);
+      status s = status::failure;
       return s;
     }
   };
