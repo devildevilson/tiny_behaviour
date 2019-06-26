@@ -39,18 +39,18 @@ namespace tb {
 //         std::cout << err << "\n";
 //         exit(-1);
 //     }
-  
+
   class NodeContainer {
   public:
     NodeContainer(const size_t &containerBlockSize) : blockSize(containerBlockSize), currentSize(0), memory(nullptr) {
       allocateNewBlock();
     }
-    
+
     NodeContainer(NodeContainer &&container) : blockSize(container.blockSize), currentSize(container.currentSize), memory(container.memory) {
       container.currentSize = 0;
       container.memory = nullptr;
     }
-    
+
     ~NodeContainer() {
       char* curBlockPtr = memory;
       while (curBlockPtr != memory) {
@@ -59,10 +59,10 @@ namespace tb {
         curBlockPtr = nextBlock;
       }
     }
-    
+
     NodeContainer() = delete;
     NodeContainer(const NodeContainer &container) = delete;
-    
+
     NodeContainer & operator=(const NodeContainer &container) = delete;
     NodeContainer & operator=(NodeContainer &&container) = delete;
 //     void operator=(NodeContainer&& container) {
@@ -72,27 +72,27 @@ namespace tb {
 //       container.currentSize = 0;
 //       container.memory = nullptr;
 //     }
-    
+
     template<typename T, typename... Args>
     T* create(Args&&... args) {
       assert(sizeof(T) < blockSize && "Bad node container size");
-      
+
       if (currentSize + sizeof(T) > blockSize) {
         allocateNewBlock();
       }
-      
+
       T* memoryPtr = reinterpret_cast<T*>(memory + sizeof(char*) + currentSize);
       new (memoryPtr) T(std::forward<Args>(args)...);
-      currentSize += sizeof(T); 
-      
+      currentSize += sizeof(T);
+
       return memoryPtr;
     }
-    
+
     template<typename T>
     void destroy(T* ptr) {
       ptr->~T();
     }
-    
+
     constexpr size_t size() const {
       return blockSize;
     }
@@ -100,13 +100,13 @@ namespace tb {
     const size_t blockSize;
     size_t currentSize;
     char* memory;
-    
+
     void allocateNewBlock() {
       const size_t newSize = blockSize + sizeof(char*);
       char* newBuffer = new char[newSize];
-      
+
       currentSize = 0;
-      
+
       char** tmp = reinterpret_cast<char**>(newBuffer);
       tmp[0] = memory;
       memory = newBuffer;
@@ -138,9 +138,9 @@ namespace tb {
     void print(const std::string &indent) const override {
       if (root != nullptr) root->print(indent);
     }
-    
+
     constexpr static uint32_t getType() { return TINY_BEHAVIOR_TREE_NODE_TYPE; }
-    
+
 //     Node* getRunning() { return currentAction; }
 //     void setRunning(Node* node) override { currentAction = node; }
   private:
@@ -159,7 +159,7 @@ namespace tb {
         currentContainer.destroy(node);
       }
     }
-    
+
     BehaviorTreeBuilder & sequence(Sequence** out = nullptr) {
       error();
 
@@ -175,7 +175,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & selector(Selector** out = nullptr) {
       error();
 
@@ -191,7 +191,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & parallel(const uint32_t &minSuccess = 0, const uint32_t &minFail = 0, ParallelSequence** out = nullptr) {
       error();
 
@@ -207,7 +207,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & memSelector(MemSelector** out = nullptr) {
       error();
 
@@ -223,7 +223,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & memSequence(MemSequence** out = nullptr) {
       error();
 
@@ -239,7 +239,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & random(const uint32_t &seed = 0, RandomSelector** out = nullptr) {
       error();
 
@@ -254,7 +254,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & whiledo(const std::function<PREDICATE_SIGNATURE> &f, WhileDo** out = nullptr) {
       error();
 
@@ -271,7 +271,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & end() {
       if (currentNode->is<Decorator>()) if (callback) callback("Empty decorator!");
       if (compositeOrBinaryNode.empty()) if (callback) callback("There are no composite nodes that needs to end!");
@@ -282,7 +282,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & inverter(Inverter** out = nullptr) {
       error();
 
@@ -297,7 +297,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & repeater(const uint32_t &limit = 0, Repeater** out = nullptr) {
       error();
 
@@ -312,7 +312,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & limiter(const uint32_t &limit = 0, Limiter** out = nullptr) {
       error();
 
@@ -327,7 +327,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & untilFail(UntilFail** out = nullptr) {
       error();
 
@@ -342,7 +342,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & untilSuccess(UntilSuccess** out = nullptr) {
       error();
 
@@ -357,7 +357,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & failer(Failer** out = nullptr) {
       error();
 
@@ -372,7 +372,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & succeeder(Succeeder** out = nullptr) {
       error();
 
@@ -387,7 +387,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & condition(const std::function<PREDICATE_SIGNATURE> &f, Condition** out = nullptr) {
       error();
 
@@ -403,7 +403,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & conjunction(Conjunction** out = nullptr) {
       error();
 
@@ -419,7 +419,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & disjunction(Disjunction** out = nullptr) {
       error();
 
@@ -435,7 +435,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & equality(Equality** out = nullptr) {
       error();
 
@@ -451,7 +451,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & implication(Implication** out = nullptr) {
       error();
 
@@ -467,7 +467,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & ifelse(const std::function<PREDICATE_SIGNATURE> &f, ConditionSelector** out = nullptr) {
       error();
 
@@ -484,7 +484,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTreeBuilder & action(const std::function<Node::status(Node* const&, void* const&)> &f, Action** out = nullptr) {
       error();
 
@@ -501,13 +501,13 @@ namespace tb {
 
       return *this;
     }
-    
+
     template<typename T, typename ...Args>
-    BehaviorTreeBuilder & leaf(Args&&... args, T** out = nullptr) {
+    BehaviorTreeBuilder & leaf(T** out, Args&&... args) {
       T* node = currentContainer.create<T>(std::forward<Args>(args)...);
-      
+
       if (out != nullptr) *out = node;
-      
+
       checkCurrentNode(node);
 
       nodes.push_back(node);
@@ -516,7 +516,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     virtual BehaviorTreeBuilder & add(Node* node) {
       error();
 
@@ -529,7 +529,7 @@ namespace tb {
         // тут по идее мы не должны удалять, да и копировать не надо
         // просто сделать так чтобы эти вещи не удалялись при удалении текущего дерева
         // как это сделать?
-        
+
 //         auto* tree = reinterpret_cast<BehaviorTree*>(node);
 //         tree->nodes.clear();
 //         tree->root = nullptr;
@@ -542,7 +542,7 @@ namespace tb {
 
       return *this;
     }
-    
+
     BehaviorTree* build() {
       if (!compositeOrBinaryNode.empty()) if (callback) callback("There are still not ended composites or binary!");
       if (!nodes.back()->is<Action>()) if (callback) callback("Last element is not an action!");
@@ -587,13 +587,13 @@ namespace tb {
         parent->setChild(node);
         node->parent = parent;
       }
-      
+
       if (currentNode != nullptr && currentNode->is<Compositor>()) {
         auto* parent = reinterpret_cast<Compositor*>(currentNode);
         parent->addChild(node);
         node->parent = parent;
       }
-      
+
       if (currentNode != nullptr && currentNode->is<Binary>()) {
         auto* parent = reinterpret_cast<Binary*>(currentNode);
         uint8_t index = 0;
@@ -612,7 +612,7 @@ namespace tb {
       if (node->is<Compositor>()) {
         if (!(reinterpret_cast<Compositor*>(node))->hasChildren()) compositeOrBinaryNode.push_back(node);
         else for (const auto &child : (reinterpret_cast<Compositor*>(node))->children) addToNodesRecursive(child, emptyDecorator);
-        
+
       } else if (node->is<Decorator>()) {
         auto* child = (reinterpret_cast<Decorator*>(node))->child;
         if (child == nullptr) {
@@ -620,7 +620,7 @@ namespace tb {
             emptyDecorator = true;
         }
         else addToNodesRecursive((reinterpret_cast<Decorator*>(node))->child, emptyDecorator);
-        
+
       } else if (node->is<Binary>()) {
         auto* binary = (reinterpret_cast<Binary*>(node));
         if (!(binary->hasFirstChild() && binary->hasSecondChild())) compositeOrBinaryNode.push_back(node);

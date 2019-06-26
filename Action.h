@@ -19,12 +19,12 @@ namespace tb {
       if (s == status::running && runningPtr != nullptr) *runningPtr = this;
       return s;
     }
-    
+
     std::string toString() const override { return "Action"; }
     void print(const std::string &indent) const override {
-      std::cout << indent + toString() << "\n";
+      std::cout << indent << toString() << "\n";
     }
-    
+
     constexpr static uint32_t getType() { return TINY_ACTION_NODE_TYPE; }
   private:
     std::function<status(Node* const& currentNode, void* const& data)> action;

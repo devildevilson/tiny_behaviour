@@ -6,76 +6,91 @@ Tiny Behavior is a small, easy to learn and use, header only Behavior Tree libra
 Its easy, look, there is a simple example:  
 ```c++
 #include <iostream>
-#include "TinyBehavior/TinyBehavior.h"
+#include "TinyBehavior.h"
 
 int main(int argc, char* argv[]) {
-    tb::BehaviorTreeBuilder builder;
-    tb::BehaviorTree* tree;
-    tree = builder.parallel()
+  // all data would be local if we provide appropriate size to the builder
+  const size_t treeSize = sizeof(tb::ParallelSequence) + sizeof(tb::Action) * 4 + sizeof(tb::Failer) + sizeof(tb::Condition) + sizeof(tb::Limiter) + sizeof(ActionNode1);
+  tb::BehaviorTreeBuilder builder(treeSize);
+  tb::BehaviorTree* tree;
+  tree = builder.parallel()
+                  .action([] (tb::Node* const& currentNode, void* const& data = nullptr) {
+                    std::cout << '\n';
+                    std::cout << "Im an action in parallel node!" << "\n";
+                    return tb::Node::status::success;
+                  })
+                  .failer()
                     .action([] (tb::Node* const& currentNode, void* const& data = nullptr) {
-                        std::cout << "Im an action in parallel node!" << "\n";
-                        return tb::Node::Status::Success;
+                      std::cout << "Im another action in parallel node!" << "\n";
+                      return tb::Node::status::success;
                     })
-                    .failer()
-                        .action([] (tb::Node* const& currentNode, void* const& data = nullptr) {
-                            std::cout << "Im another action in parallel node!" << "\n";
-                            return tb::Node::Status::Success;
-                        })
-                    .condition([] (tb::Node* const& currentNode, void* const& data = nullptr) {
-                        std::cout << "Some condition before action!" << "\n";
-                        return true;
+                  .condition([] (tb::Node* const& currentNode, void* const& data = nullptr) {
+                    std::cout << "Some condition before action!" << "\n";
+                    return true;
+                  })
+                    .action([] (tb::Node* const& currentNode, void* const& data = nullptr) {
+                      std::cout << "Im an action in the condition!" << "\n";
+                      return tb::Node::status::running;
                     })
-                        .action([] (tb::Node* const& currentNode, void* const& data = nullptr) {
-                            std::cout << "Im an action in the condition!" << "\n";
-                            return tb::Node::Status::Running;
-                        })
-                    .limiter(5)
-                        .action([] (tb::Node* const& currentNode, void* const& data = nullptr) {
-                            std::cout << "Im an action that succeds or run only 5 times" << "\n";
-                            return tb::Node::Status::Success;
-                        })
-                    // ... and others type of nodes, you can read about them below
-                   .end() // parallel needs to be end
-                .build();
-    tree.print(); // for debugging
-    tree.update(); // use
-    // ...
-    delete tree; // dont forget to delete tree, it deletes all nodes in that tree too
+                  .limiter(5)
+                    .action([] (tb::Node* const& currentNode, void* const& data = nullptr) {
+                      std::cout << "Im an action that succeds or run only 5 times" << "\n";
+                      return tb::Node::status::success;
+                    })
+                  // ... and others type of nodes, you can read about them below
+                 .end() // parallel needs to be end
+              .build();
+  tree.print("  "); // for debugging
+
+  tb::Node* running = nullptr; // for optimisation purpose you can take currently running action node
+  for (size_t i = 0; i < 6; ++i) {
+    tree->update(
+      nullptr, // user data
+      &running
+    ); // use
+  }
+
+  if (running != nullptr) running->update();
+
+  // ...
+  delete tree; // dont forget to delete tree, it deletes all nodes in that tree too
 }
 ```
 You can even make your own node:  
 ```c++
 class Idle : public tb::Leaf {
 public:
-    Idle(bool* enemyInSight) : Leaf(), enemyInSight(enemyInSight) {}
-    
-    // main function
-    Status update(void* const& data = nullptr) override {
-        if (*enemyInSight) return Node::Status::Success;
-        std::cout << "Im waiting!" << "\n";
-        return Node::Status::Failure;
-    }
-    
-    // std::string toString() const {} - can be overriden
-    // void print(const std::string &indent) const {} - can be overriden
+  Idle(bool* enemyInSight) : Leaf(), enemyInSight(enemyInSight) {}
+
+  // main function
+  tb::Node::status update(void* const& data = nullptr, tb::Node** runningPtr = nullptr) override {
+    (void)runningPtr; // use it when you need a pointer to running node
+
+    if (*enemyInSight) return Node::Status::Success;
+    std::cout << "Im waiting!" << "\n";
+    return Node::Status::Failure;
+  }
+
+  // std::string toString() const {} - can be overriden
+  // void print(const std::string &indent) const {} - can be overriden
 private:
-    bool* enemyInSight;
+  bool* enemyInSight;
 };
 ```
 and use it in your code:  
 ```c++
 // ...
-Idle* idle = new Idle(someBoolPointer);
+Idle* idle = nullptr; // here would be pointer to your node
 // ...
 tree = builder
-                // ...
-                .add(idle)
-                // ...
-            .build();
-            
-    tree.update();
-    // ...
-    delete tree; // not needs to delete idle
+            // ...
+            .leaf<Idle>(&idle, &someBoolPointer)
+            // ...
+          .build();
+
+tree.update();
+// ...
+delete tree; // not needs to delete idle
 ```
 All information about making your own nodes is in paragraph Inheritance.  <br/>
 
@@ -91,8 +106,8 @@ BehaviorTreeBuilder class methods:  <br/>
 `whiledo(predicate)` - updates all nodes while `condition == true`, returns `Status::Running` in this case, if `condition == false` does nothing and returns `Status::Failure`  <br/>
 ### Binary nodes:  <br/>
 (`Status::Success` is `true`, `Status::Failure` is `false`)<br/>
-`conjunction()` - Status first && Status second (`Status::Running` = `Status::Failure`)  <br/>
-`disjunction()` - Status first || Status second (`Status::Running` = `Status::Success`)  <br/>
+`conjunction()` - Status first && Status second  <br/>
+`disjunction()` - Status first || Status second  <br/>
 `equality()` - Status first == Status second  <br/>
 `implication()` - Status first -> Status second (!(Status first) || Status second) (`Status::Running` = `Status::Failure`)  <br/>
 `ifelse(predicate)` - if `contidion == true` updates first, else second  <br/>
@@ -109,7 +124,8 @@ BehaviorTreeBuilder class methods:  <br/>
 `action(action)` - userdefined action function, must return statuses  <br/>
 ### Other methods:  <br/>
 `end()` - use it after every Compositor or Binary nodes  <br/>
-`add(node)` - adds nodes or trees to the current tree, NOTE: old tree will be deleted  <br/>
+`add(node)` - adds nodes to the current tree, NOTE: adding trees is under construction  <br/>
+`leaf(arguments)` - create userdefined action node
 `build()` - does some postworks and returns `BehaviorTree` pointer  <br/>
 `debug(string)` - just prints the string  <br/>
 `setDebugCallback(callback)` - set callback function for the error strings  <br/>
@@ -138,15 +154,18 @@ About the main types:  <br/>
 #### Binary - members:  <br/>
 `nodes` - pair of childs  <br/>
   <br/>
-`update(data)`, `toString()` and `print(indent)` can be overriden from any class. Check source code for more information  <br/>
-  
+`update(data, runningNodePtr)`, `toString()` and `print(indent)` can be overriden from any class. Check source code for more information  <br/>
+
+## Examples
+Perfectly hided in example folder, provided with Makefile
+
 ## ToDo
-1. Some other nodes  
-2. Some other node types  
-3. Delete repeater?  
-4. Tests  
-5. Benchmarks  
-6. Some optimisation  
-  
+1. Userdefined decorator/compositor/binary node create method
+2. Delete repeater?  
+3. Tests  
+4. Benchmarks  
+5. Multithreading support
+6. Multithreading examples
+
 ## Licence  
 MIT  
